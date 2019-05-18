@@ -2,7 +2,8 @@ import io
 import time
 
 import numpy as numpy
-import edgetpu.classification.engine
+from edgetpu.detection.engine import DetectionEngine
+
 
 import cv2
 from config import Config
@@ -12,7 +13,7 @@ class VideoCamera(object):
         with open(Config.LABEL_PATH, 'r', encoding="utf-8") as f:
             pairs = (l.strip().split(maxsplit=1) for l in f.readlines())
             self.labels = dict((int(k), v) for k, v in pairs)
-        self.engine = edgetpu.classification.engine.ClassificationEngine(Config.MODEL_PATH)
+        self.engine = DetectionEngine(Config.MODEL_PATH)
 
         # Using OpenCV to capture from device 0. If you have trouble capturing
         # from a webcam, comment the line below out and use a video file
@@ -38,7 +39,6 @@ class VideoCamera(object):
         annotate_text = ""
         annotate_text_time = time.time()
         time_to_show_prediction = 1.0
-        min_confidence = 0.2
 
         _, width, height, channels = self.engine.get_input_tensor_shape()
         if not self.video.isOpened():
@@ -49,25 +49,54 @@ class VideoCamera(object):
         input = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         input = cv2.resize(input, (width, height))
         input = input.reshape((width * height * channels))
+        rows = img.shape[0]
+        cols = img.shape[1]
         start_ms = time.time()
-        results = self.engine.ClassifyWithInputTensor(input, top_k=1)
+        #############
+        # Run inference.
+        ans = self.engine.DetectWithInputTensor(input, threshold=Config.DETECT_THRESHOLD,
+            top_k=Config.TOP_K)
         elapsed_ms = time.time() - start_ms
-        # if results:
-        #     print( "%s %.2f\n%.2fms" % (self.labels[results[0][0]], results[0][1], elapsed_ms*1000.0))
-        if results and\
-                    results[0][1] > min_confidence:
-            annotate_text = "%s %.2f  %.2fms" % (
-                self.labels[results[0][0]], results[0][1], elapsed_ms*1000.0)
-            annotate_text_time = time.time()
+        # Display result.
+        if ans:
+            for obj in ans:
+                box = obj.bounding_box.flatten().tolist()
+                #print ('id=', obj.label_id, 'score = ', obj.score, 'box = ', box)
+                # Draw a rectangle.
+                x = box[0] * cols
+                y = box[1] * rows
+                right = box[2] * cols
+                bottom = box[3] * rows
+                cv2.rectangle(img, (int(x), int(y)), (int(right), int(bottom)), (125, 255, 51), thickness=2)
+                annotate_text = "%s %.2f  %.2fms" % (
+                    self.labels[obj.label_id], obj.score, elapsed_ms*1000.0)
+                annotate_text_time = time.time()
+                cv2.putText(img, annotate_text, 
+                    bottomLeftCornerOfText, 
+                    font, 
+                    fontScale,
+                    fontColor,
+                    lineType)
+
+        ##################
+        # results = self.engine.ClassifyWithInputTensor(input, top_k=Config.TOP_K)
+        # elapsed_ms = time.time() - start_ms
+        # # if results:
+        # #     print( "%s %.2f\n%.2fms" % (self.labels[results[0][0]], results[0][1], elapsed_ms*1000.0))
+        # if results and\
+        #             results[0][1] > Config.DETECT_THRESHOLD:
+        #     annotate_text = "%s %.2f  %.2fms" % (
+        #         self.labels[results[0][0]], results[0][1], elapsed_ms*1000.0)
+        #     annotate_text_time = time.time()
                     
-            cv2.putText(img, annotate_text, 
-                bottomLeftCornerOfText, 
-                font, 
-                fontScale,
-                fontColor,
-                lineType)
-        # We are using Motion JPEG, but OpenCV defaults to capture raw images,
-        # so we must encode it into JPEG in order to correctly display the
-        # video stream.
+        #     cv2.putText(img, annotate_text, 
+        #         bottomLeftCornerOfText, 
+        #         font, 
+        #         fontScale,
+        #         fontColor,
+        #         lineType)
+        # # We are using Motion JPEG, but OpenCV defaults to capture raw images,
+        # # so we must encode it into JPEG in order to correctly display the
+        # # video stream.
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
