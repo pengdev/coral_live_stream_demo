@@ -67,36 +67,17 @@ class VideoCamera(object):
                 y = box[1] * rows
                 right = box[2] * cols
                 bottom = box[3] * rows
-                cv2.rectangle(img, (int(x), int(y)), (int(right), int(bottom)), (125, 255, 51), thickness=2)
-                annotate_text = "%s %.2f  %.2fms" % (
-                    self.labels[obj.label_id], obj.score, elapsed_ms*1000.0)
-                annotate_text_time = time.time()
-                cv2.putText(img, annotate_text, 
-                    bottomLeftCornerOfText, 
-                    font, 
-                    fontScale,
-                    fontColor,
-                    lineType)
-
-        ##################
-        # results = self.engine.ClassifyWithInputTensor(input, top_k=Config.TOP_K)
-        # elapsed_ms = time.time() - start_ms
-        # # if results:
-        # #     print( "%s %.2f\n%.2fms" % (self.labels[results[0][0]], results[0][1], elapsed_ms*1000.0))
-        # if results and\
-        #             results[0][1] > Config.DETECT_THRESHOLD:
-        #     annotate_text = "%s %.2f  %.2fms" % (
-        #         self.labels[results[0][0]], results[0][1], elapsed_ms*1000.0)
-        #     annotate_text_time = time.time()
-                    
-        #     cv2.putText(img, annotate_text, 
-        #         bottomLeftCornerOfText, 
-        #         font, 
-        #         fontScale,
-        #         fontColor,
-        #         lineType)
-        # # We are using Motion JPEG, but OpenCV defaults to capture raw images,
-        # # so we must encode it into JPEG in order to correctly display the
-        # # video stream.
+                if obj.score > Config.DETECT_THRESHOLD:
+                    cv2.rectangle(img, (int(x), int(y)), (int(right), int(bottom)), (125, 255, 51), thickness=2)
+                    annotate_text = "%s %.2f  %.2fms" % (
+                        self.labels[obj.label_id], obj.score, elapsed_ms*1000.0)
+                    annotate_text_time = time.time()
+                    cv2.putText(img, annotate_text, 
+                        (int(x), int(bottom)), 
+                        font, 
+                        fontScale,
+                        fontColor,
+                        lineType)
+                        
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
