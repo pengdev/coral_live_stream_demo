@@ -18,5 +18,5 @@ class Config:
     MODEL_PATH = DATA_DIR + 'mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite'
     LABEL_PATH = DATA_DIR + 'coco_labels.txt'
     
-    DETECT_THRESHOLD = 0.1
-    TOP_K = 1
+    DETECT_THRESHOLD = 0.3
+    TOP_K = 3

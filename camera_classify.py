@@ -36,8 +36,6 @@ class VideoCamera(object):
         lineType               = 2
 
         annotate_text = ""
-        annotate_text_time = time.time()
-        time_to_show_prediction = 1.0
 
         _, width, height, channels = self.engine.get_input_tensor_shape()
         if not self.video.isOpened():
@@ -57,7 +55,6 @@ class VideoCamera(object):
                     results[0][1] > Config.DETECT_THRESHOLD:
             annotate_text = "%s %.2f  %.2fms" % (
                 self.labels[results[0][0]], results[0][1], elapsed_ms*1000.0)
-            annotate_text_time = time.time()
                     
             cv2.putText(img, annotate_text, 
                 bottomLeftCornerOfText, 

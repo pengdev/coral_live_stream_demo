@@ -1,6 +1,6 @@
 import io
 import time
-
+import random
 import numpy as numpy
 from edgetpu.detection.engine import DetectionEngine
 
@@ -30,15 +30,15 @@ class VideoCamera(object):
         self.video.release()
     
     def get_frame(self):
+        start_time = time.time()
         font                   = cv2.FONT_HERSHEY_SIMPLEX
+        topLeftCornerOfText = (10, 20)
         bottomLeftCornerOfText = (10, 470)
         fontScale              = 0.6
-        fontColor              = (255,255,255)
-        lineType               = 2
+        fontColor              = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+        lineType               = 1
 
         annotate_text = ""
-        annotate_text_time = time.time()
-        time_to_show_prediction = 1.0
 
         _, width, height, channels = self.engine.get_input_tensor_shape()
         if not self.video.isOpened():
@@ -51,12 +51,14 @@ class VideoCamera(object):
         input = input.reshape((width * height * channels))
         rows = img.shape[0]
         cols = img.shape[1]
-        start_ms = time.time()
+        record_time = time.time()
+        elapsed_record_ms = record_time - start_time
         #############
         # Run inference.
         ans = self.engine.DetectWithInputTensor(input, threshold=Config.DETECT_THRESHOLD,
             top_k=Config.TOP_K)
-        elapsed_ms = time.time() - start_ms
+        detection_time = time.time()
+        elapsed_detection_ms = detection_time - record_time
         # Display result.
         if ans:
             for obj in ans:
@@ -68,9 +70,10 @@ class VideoCamera(object):
                 right = box[2] * cols
                 bottom = box[3] * rows
                 if obj.score > Config.DETECT_THRESHOLD:
-                    cv2.rectangle(img, (int(x), int(y)), (int(right), int(bottom)), (125, 255, 51), thickness=2)
-                    annotate_text = "%s %.2f  %.2fms" % (
-                        self.labels[obj.label_id], obj.score, elapsed_ms*1000.0)
+                    cv2.rectangle(img, (int(x), int(y)), (int(right), int(bottom)), 
+                        fontColor, thickness=1)
+                    annotate_text = "%s %.2f" % (
+                        self.labels[obj.label_id], obj.score)
                     annotate_text_time = time.time()
                     cv2.putText(img, annotate_text, 
                         (int(x), int(bottom)), 
@@ -78,6 +81,12 @@ class VideoCamera(object):
                         fontScale,
                         fontColor,
                         lineType)
-                        
+        elapsed_frame_ms = (time.time() - start_time) * 1000.0
+        frame_rate_text = "FPS: %.2f record: %.2fms detection: %.2fms" % (1000.0/elapsed_frame_ms,
+            elapsed_record_ms * 1000.0, elapsed_detection_ms * 1000.0)
+        cv2.putText(img, frame_rate_text,
+                topLeftCornerOfText,
+                font, fontScale,
+                fontColor, lineType)
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
