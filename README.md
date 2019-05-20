@@ -12,8 +12,9 @@ Coral object classification originally from Google LLC.
 0. Install the Edge TPU runtime and Python library following 
 https://coral.withgoogle.com/docs/accelerator/get-started/
 1. Install Python dependencies: cv2, flask.
-2. Run "python3 main.py", or run "sh ./start.sh".
-3. Navigate the browser to the http://ip-adress:5000.
+2. Download pretrained Edge TPU sample models using: sh download_models.sh
+3. Run "python3 main.py", or run "sh ./start.sh" in the background.
+4. Navigate the browser to the http://ip-adress:5000.
 
 ### Reference
 1. https://github.com/log0/video_streaming_with_flask_example
