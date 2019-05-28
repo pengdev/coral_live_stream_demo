@@ -1,5 +1,5 @@
 from flask import Flask, render_template, Response
-from camera_detection import VideoCamera
+from camera_moose_detection import VideoCamera
 #from camera_classify import VideoCamera
 
 app = Flask(__name__)
