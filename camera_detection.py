@@ -10,6 +10,7 @@ from config import Config
 
 class VideoCamera(object):
     def __init__(self):
+        print('starting camera')
         with open(Config.LABEL_PATH, 'r', encoding="utf-8") as f:
             pairs = (l.strip().split(maxsplit=1) for l in f.readlines())
             self.labels = dict((int(k), v) for k, v in pairs)
@@ -27,6 +28,7 @@ class VideoCamera(object):
         # self.video = cv2.VideoCapture('video.mp4')
     
     def __del__(self):
+        print('closing camera')
         self.video.release()
     
     def get_frame(self):

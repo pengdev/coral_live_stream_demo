@@ -26,6 +26,7 @@ class VideoCamera(object):
         # self.video = cv2.VideoCapture('video.mp4')
     
     def __del__(self):
+        print('closing camera')
         self.video.release()
     
     def get_frame(self):
